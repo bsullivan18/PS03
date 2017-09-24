@@ -1,19 +1,24 @@
 ---
-title: "STAT/MATH 495: Problem Set 03"
+title: 'STAT/MATH 495: Problem Set 03'
 author: "Brenna Sullivan"
-date: "2017-09-26"
+date: '2017-09-26'
 output:
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
   html_document:
-    toc: true
-    toc_float: true
+    collapsed: no
+    smooth_scroll: no
+    toc: yes
     toc_depth: 2
-    collapsed: false
-    smooth_scroll: false
+    toc_float: yes
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, fig.width=8, fig.height=4.5)
+install.packages("rpart")
 library(mosaic)
+library(broom)
 # Load packages
 library(tidyverse)
 data1 <- read_csv("data/data1.csv")
@@ -33,16 +38,45 @@ For both `data1` and `data2` tibbles (a tibble is a data frame with some
 
 
 # Data 1
+```{r}
+library(caret)
+library(rpart)
+data("data1")
+model.single <- rpart(y ~ x, data=data1, method = "class")
+predict.single <- predict(object = model.single, newdata = data1, type = "class")
+```
 
-```{r, echo=TRUE, warning=FALSE, message=FALSE}
-head(data1)
-xyplot(y~x, data=data1)
+
+```{r}
+k.folds <- function(k) {
+    folds <- createFolds(data1$y, k = k, list = TRUE, returnTrain = TRUE)
+    for (i in 1:k) {
+        model <- rpart(y~x, data = data1[folds[[i]],], method = "class")
+        predictions <- predict(object = model, newdata = data1[-folds[[i]],], type = "class")
+        accuracies.dt <- c(accuracies.dt,confusionMatrix(predictions, data1[-folds[[i]], ]$y)$overall[[1]])
+    }
+    accuracies.dt
+}
+
+set.seed(1)
+accuracies.dt <- c()
+accuracies.dt <- k.folds(50)
+accuracies.dt
+
+mean.accuracies <- mean(accuracies.dt)
 ```
 
 # Data 2
 
 ```{r, echo=TRUE, warning=FALSE, message=FALSE}
 head(data2)
-xyplot(y~x, data=data2)
+```
+
+```{r}
+smooth.spline(data2$x, data2$y, df=19) %>%
+  broom::augment() %>% 
+  ggplot(aes(x=x)) +
+  geom_point(aes(y=y)) +
+  geom_line(aes(y=.fitted), col="blue", size=1)
 ```
 
