@@ -20,6 +20,7 @@ library(mosaic)
 library(broom)
 # Load packages
 library(tidyverse)
+library(plyr)
 data1 <- read_csv("data/data1.csv")
 data2 <- read_csv("data/data2.csv")
 ```
@@ -36,86 +37,139 @@ For both `data1` and `data2` tibbles (a tibble is a data frame with some
 * Give your estimate $\widehat{\sigma}$ of $\sigma$ where the noise component $\epsilon_i$ is distributed with mean 0 and  standard deviation $\sigma$.
 
 
-# Data 1
+# Cross Validation Function (for Data1 and Data2)
 ```{r}
-library(caret)
-library(rpart)
-head(data1)
+#test to delete
+crossval <- function(train, test){
+  dfRMSE <- data.frame()
+  output <- NULL
+  i <- 5
+  while(i <= 50){
+    model <- smooth.spline(x = train$x,y = train$y, df=i)
+    new_x <- test$x
+    output <- predict(model, new_x)
+    output <- as.data.frame(output)
+    output <- cbind(output, y_obs = test$y)
+    RMSE <- sqrt(mean(output$y_obs - output$y)^2)
+    new_row <- c(i, RMSE)
+    dfRMSE <- rbind(dfRMSE, new_row)
+    i = i + 1
+  }
+  names(dfRMSE) <- c("df","RMSE")
+  return(dfRMSE)
+}
+```
+
+# Data1
+
+###Five Folds
+```{r}
+#create the folds
+set.seed(1)
+splitdata <- sample(1:5, size = nrow(data1), replace=T, prob=c(0.2,0.2,0.2,0.2,0.2))
+data11 <- data1[splitdata==1,]
+data12 <- data1[splitdata==2,]
+data13 <- data1[splitdata==3,]
+data14 <- data1[splitdata==4,]
+data15 <- data1[splitdata==5,]
+
+#run each fold agains the other folds
+fold1_data1 <- crossval(data1[splitdata != 1,], data11)
+fold2_data1 <- crossval(data1[splitdata != 2,], data12)
+fold3_data1 <- crossval(data1[splitdata != 3,], data13)
+fold4_data1 <- crossval(data1[splitdata != 4,], data14)
+fold5_data1 <- crossval(data1[splitdata != 5,], data15)
+```
+
+###meanRMSE
+```{r}
+#calculate the RMSE for each fold and take the average of the 5 to hey meanRMSE
+data1_folds <- join_all(list(fold1_data1, fold2_data1, fold3_data1, fold4_data1, fold5_data1), by = "df")
+names(data1_folds) <- c("df","fold1","fold2","fold3","fold4","fold5")
+data1_folds$meanRMSE <- (data1_folds$fold1 + data1_folds$fold2 + data1_folds$fold3 + data1_folds$fold4 + data1_folds$fold5)/5
 ```
 
 
+###Best Out-Of-Sample Predictive Ability
 ```{r}
-data1 <- read_csv("data/data1.csv")
+#minimum point and graph of df
+min_point <- data1_folds[which(data1_folds$meanRMSE == min(data1_folds$meanRMSE)),]
+min_point
 
-library(rpart); library(caret)
-model.single <- rpart(y ~ x, data = data1, method = "class")
-predict.single <- predict(object = model.single, newdata = data1, type = "class")
 
-k.folds <- function(k) {
-    folds <- createFolds(data1$y, k = k, list = TRUE)
-    for (i in 1:k) {
-        model <- rpart(y ~ x, data = data1[folds[[i]],], method = "class")
-        predictions <- predict(object = model, newdata = data1[-folds[[i]],], type = "class")
-        accuracies.dt <- c(accuracies.dt, 
-                           confusionMatrix(predictions, data1[-folds[[i]], ]$y)$overall[[1]])
-    }
-    accuracies.dt
-}
+ggplot() +
+  geom_line(data = data1_folds, aes(x = df, y = meanRMSE))
+  
+```
+Here, from the calculation of the minimum of the RMSE, as well as the graph, you can see that RMSE is the smallest when df=13.  There, the RMSE is .42491.
 
-set.seed(1)
-accuracies.dt <- c()
-accuracies.dt <- k.folds(5)
-accuracies.dt
+###Spline Model for Visualization
+```{r}
+#spline model with the optimal degrees of freedom
+data1_spline <- smooth.spline(data1$x, data1$y, df=min_point$df)
 
-mean.accuracies <- mean(accuracies.dt)
-sqrt(mean.accuracies)
+
+model_spline_data_frame <- data1_spline %>%
+  broom::augment()
+ggplot(model_spline_data_frame, aes(x=x)) +
+  geom_point(aes(y=y)) +
+  geom_line(aes(y=.fitted), col="blue", size=1)
 ```
 
 
 # Data 2
 
-```{r, echo=TRUE, warning=FALSE, message=FALSE}
-head(data2)
+###Five Folds
+```{r}
+#create the folds
+set.seed(1)
+splitdata <- sample(1:5, size = nrow(data2), replace=T, prob=c(0.2,0.2,0.2,0.2,0.2))
+data21 <- data2[splitdata==1,]
+data22 <- data2[splitdata==2,]
+data23 <- data2[splitdata==3,]
+data24 <- data2[splitdata==4,]
+data25 <- data2[splitdata==5,]
+
+#run each fold agains the other folds
+fold1_data2 <- crossval(data2[splitdata != 1,], data21)
+fold2_data2 <- crossval(data2[splitdata != 2,], data22)
+fold3_data2 <- crossval(data2[splitdata != 3,], data23)
+fold4_data2 <- crossval(data2[splitdata != 4,], data24)
+fold5_data2 <- crossval(data2[splitdata != 5,], data25)
 ```
 
+###meanRMSE
 ```{r}
-model_spline <- smooth.spline(data2$x, data2$y, df=11)
+#calculate the RMSE for each fold and take the average of the 5 to get meanRMSE
+data2_folds <- join_all(list(fold1_data2, fold2_data2, fold3_data2, fold4_data2, fold5_data2), by = "df")
+names(data2_folds) <- c("df","fold1","fold2","fold3","fold4","fold5")
+data2_folds$meanRMSE <- (data2_folds$fold1 + data2_folds$fold2 + data2_folds$fold3 + data2_folds$fold4 + data2_folds$fold5)/5
+```
 
 
-model_spline_data_frame <- model_spline %>%
+###Best Out-Of-Sample Predictive Ability
+```{r}
+#minimum point and graph of df
+min_point2 <- data2_folds[which(data2_folds$meanRMSE == min(data2_folds$meanRMSE)),]
+min_point2
+
+
+ggplot() +
+  geom_line(data = data2_folds, aes(x = df, y = meanRMSE))
+  
+```
+Here, from the calculation of the minimum of the RMSE, as well as the graph, you can see that RMSE is the smallest when df=13.  There, the RMSE is .7361.
+
+###Spline Model for Visualization
+```{r}
+#spline model with the optimal degrees of freedom
+data2_spline <- smooth.spline(data2$x, data2$y, df=min_point2$df)
+
+
+model_spline_data_frame <- data1_spline %>%
   broom::augment()
 ggplot(model_spline_data_frame, aes(x=x)) +
   geom_point(aes(y=y)) +
   geom_line(aes(y=.fitted), col="blue", size=1)
-
-
-data2_A <- data2 %>% 
-  sample_n(1500)
-data2_B <- data2 %>% 
-  anti_join(data2_A, by="ID")
-
-
-
-new_x1 <- as.vector(data2_A$x)
-
-output1 <- predict(model_spline, new_x1) %>% 
-  tibble::as.tibble()
-head(output)
-
-MSE1 <- ((data2$y - output1$y)^2)
-RMSE1 <- sqrt(mean(MSE1))
-
-new_x2 <- as.vector(data2_B$x)
-
-output2 <- predict(model_spline, new_x2) %>% 
-  tibble::as.tibble()
-head(output)
-
-MSE2 <- ((data2$y - output2$y)^2)
-RMSE2 <- sqrt(mean(MSE2))
-
-(RMSE + RMSE2)/2
 ```
-
-
 
