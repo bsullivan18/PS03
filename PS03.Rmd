@@ -1,7 +1,7 @@
 ---
 title: 'STAT/MATH 495: Problem Set 03'
 author: "Brenna Sullivan"
-date: '2017-09-26'
+date: '17-09-26'
 output:
   pdf_document:
     toc: yes
@@ -16,7 +16,6 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, fig.width=8, fig.height=4.5)
-install.packages("rpart")
 library(mosaic)
 library(broom)
 # Load packages
@@ -41,30 +40,37 @@ For both `data1` and `data2` tibbles (a tibble is a data frame with some
 ```{r}
 library(caret)
 library(rpart)
-data("data1")
-model.single <- rpart(y ~ x, data=data1, method = "class")
-predict.single <- predict(object = model.single, newdata = data1, type = "class")
+head(data1)
 ```
 
 
 ```{r}
+data1 <- read_csv("data/data1.csv")
+
+library(rpart); library(caret)
+model.single <- rpart(y ~ x, data = data1, method = "class")
+predict.single <- predict(object = model.single, newdata = data1, type = "class")
+
 k.folds <- function(k) {
-    folds <- createFolds(data1$y, k = k, list = TRUE, returnTrain = TRUE)
+    folds <- createFolds(data1$y, k = k, list = TRUE)
     for (i in 1:k) {
-        model <- rpart(y~x, data = data1[folds[[i]],], method = "class")
+        model <- rpart(y ~ x, data = data1[folds[[i]],], method = "class")
         predictions <- predict(object = model, newdata = data1[-folds[[i]],], type = "class")
-        accuracies.dt <- c(accuracies.dt,confusionMatrix(predictions, data1[-folds[[i]], ]$y)$overall[[1]])
+        accuracies.dt <- c(accuracies.dt, 
+                           confusionMatrix(predictions, data1[-folds[[i]], ]$y)$overall[[1]])
     }
     accuracies.dt
 }
 
 set.seed(1)
 accuracies.dt <- c()
-accuracies.dt <- k.folds(50)
+accuracies.dt <- k.folds(5)
 accuracies.dt
 
 mean.accuracies <- mean(accuracies.dt)
+sqrt(mean.accuracies)
 ```
+
 
 # Data 2
 
@@ -73,10 +79,43 @@ head(data2)
 ```
 
 ```{r}
-smooth.spline(data2$x, data2$y, df=19) %>%
-  broom::augment() %>% 
-  ggplot(aes(x=x)) +
+model_spline <- smooth.spline(data2$x, data2$y, df=11)
+
+
+model_spline_data_frame <- model_spline %>%
+  broom::augment()
+ggplot(model_spline_data_frame, aes(x=x)) +
   geom_point(aes(y=y)) +
   geom_line(aes(y=.fitted), col="blue", size=1)
+
+
+data2_A <- data2 %>% 
+  sample_n(1500)
+data2_B <- data2 %>% 
+  anti_join(data2_A, by="ID")
+
+
+
+new_x1 <- as.vector(data2_A$x)
+
+output1 <- predict(model_spline, new_x1) %>% 
+  tibble::as.tibble()
+head(output)
+
+MSE1 <- ((data2$y - output1$y)^2)
+RMSE1 <- sqrt(mean(MSE1))
+
+new_x2 <- as.vector(data2_B$x)
+
+output2 <- predict(model_spline, new_x2) %>% 
+  tibble::as.tibble()
+head(output)
+
+MSE2 <- ((data2$y - output2$y)^2)
+RMSE2 <- sqrt(mean(MSE2))
+
+(RMSE + RMSE2)/2
 ```
+
+
 
