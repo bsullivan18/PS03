@@ -1,17 +1,17 @@
 ---
 title: 'STAT/MATH 495: Problem Set 03'
 author: "Brenna Sullivan"
-date: '17-09-26'
+date: "17-09-26"
 output:
-  pdf_document:
-    toc: yes
-    toc_depth: '2'
   html_document:
     collapsed: no
     smooth_scroll: no
     toc: yes
     toc_depth: 2
     toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
 ---
 
 ```{r setup, include=FALSE}
