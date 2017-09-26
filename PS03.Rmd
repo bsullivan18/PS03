@@ -93,8 +93,8 @@ data1_folds$meanRMSE <- (data1_folds$fold1 + data1_folds$fold2 + data1_folds$fol
 ###Best Out-Of-Sample Predictive Ability
 ```{r}
 #minimum point and graph of df
-min_point <- data1_folds[which(data1_folds$meanRMSE == min(data1_folds$meanRMSE)),]
-min_point
+bestdf1 <- data1_folds[which(data1_folds$meanRMSE == min(data1_folds$meanRMSE)),]
+bestdf1
 
 
 ggplot() +
@@ -106,7 +106,7 @@ Here, from the calculation of the minimum of the RMSE, as well as the graph, you
 ###Spline Model for Visualization
 ```{r}
 #spline model with the optimal degrees of freedom
-data1_spline <- smooth.spline(data1$x, data1$y, df=min_point$df)
+data1_spline <- smooth.spline(data1$x, data1$y, df=bestdf1$df)
 
 
 model_spline_data_frame <- data1_spline %>%
@@ -150,8 +150,8 @@ data2_folds$meanRMSE <- (data2_folds$fold1 + data2_folds$fold2 + data2_folds$fol
 ###Best Out-Of-Sample Predictive Ability
 ```{r}
 #minimum point and graph of df
-min_point2 <- data2_folds[which(data2_folds$meanRMSE == min(data2_folds$meanRMSE)),]
-min_point2
+bestdf2 <- data2_folds[which(data2_folds$meanRMSE == min(data2_folds$meanRMSE)),]
+bestdf2
 
 
 ggplot() +
@@ -163,7 +163,7 @@ Here, from the calculation of the minimum of the RMSE, as well as the graph, you
 ###Spline Model for Visualization
 ```{r}
 #spline model with the optimal degrees of freedom
-data2_spline <- smooth.spline(data2$x, data2$y, df=min_point2$df)
+data2_spline <- smooth.spline(data2$x, data2$y, df=bestdf2$df)
 
 
 model_spline_data_frame <- data1_spline %>%

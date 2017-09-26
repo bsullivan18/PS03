@@ -283,8 +283,8 @@ data1_folds$meanRMSE &lt;- (data1_folds$fold1 + data1_folds$fold2 + data1_folds$
 <div id="best-out-of-sample-predictive-ability" class="section level3">
 <h3>Best Out-Of-Sample Predictive Ability</h3>
 <pre class="r"><code>#minimum point and graph of df
-min_point &lt;- data1_folds[which(data1_folds$meanRMSE == min(data1_folds$meanRMSE)),]
-min_point</code></pre>
+bestdf1 &lt;- data1_folds[which(data1_folds$meanRMSE == min(data1_folds$meanRMSE)),]
+bestdf1</code></pre>
 <pre><code>##   df       fold1     fold2     fold3     fold4   fold5  meanRMSE
 ## 9 13 0.002326137 0.3348121 0.4184415 0.5839789 0.78499 0.4249097</code></pre>
 <pre class="r"><code>ggplot() +
@@ -294,7 +294,7 @@ min_point</code></pre>
 <div id="spline-model-for-visualization" class="section level3">
 <h3>Spline Model for Visualization</h3>
 <pre class="r"><code>#spline model with the optimal degrees of freedom
-data1_spline &lt;- smooth.spline(data1$x, data1$y, df=min_point$df)
+data1_spline &lt;- smooth.spline(data1$x, data1$y, df=bestdf1$df)
 
 
 model_spline_data_frame &lt;- data1_spline %&gt;%
@@ -335,8 +335,8 @@ data2_folds$meanRMSE &lt;- (data2_folds$fold1 + data2_folds$fold2 + data2_folds$
 <div id="best-out-of-sample-predictive-ability-1" class="section level3">
 <h3>Best Out-Of-Sample Predictive Ability</h3>
 <pre class="r"><code>#minimum point and graph of df
-min_point2 &lt;- data2_folds[which(data2_folds$meanRMSE == min(data2_folds$meanRMSE)),]
-min_point2</code></pre>
+bestdf2 &lt;- data2_folds[which(data2_folds$meanRMSE == min(data2_folds$meanRMSE)),]
+bestdf2</code></pre>
 <pre><code>##   df    fold1     fold2     fold3     fold4    fold5  meanRMSE
 ## 9 13 0.191195 0.5116611 0.7059952 0.8416529 1.430397 0.7361802</code></pre>
 <pre class="r"><code>ggplot() +
@@ -346,7 +346,7 @@ min_point2</code></pre>
 <div id="spline-model-for-visualization-1" class="section level3">
 <h3>Spline Model for Visualization</h3>
 <pre class="r"><code>#spline model with the optimal degrees of freedom
-data2_spline &lt;- smooth.spline(data2$x, data2$y, df=min_point2$df)
+data2_spline &lt;- smooth.spline(data2$x, data2$y, df=bestdf2$df)
 
 
 model_spline_data_frame &lt;- data1_spline %&gt;%
