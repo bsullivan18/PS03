@@ -1,6 +1,6 @@
 ---
 title: 'STAT/MATH 495: Problem Set 03'
-author: "Brenna Sullivan push test"
+author: "Brenna Sullivan"
 date: '17-09-26'
 output:
   pdf_document:
