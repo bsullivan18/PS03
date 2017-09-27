@@ -38,6 +38,8 @@ For both `data1` and `data2` tibbles (a tibble is a data frame with some
 
 
 # Cross Validation Function
+
+In order to get the splines model with the best out of sample predictive ability for any data, you must create a function that takes in a test set and a training set and then gives the degrees of freedom that corresponds to the degrees of freedom as output.  Here, I have the RMSE calculated by taking the differences between the splines model values and the actual data values, averaging them, and then taking the square root.
 ```{r}
 #test to delete
 crossval <- function(train, test){
@@ -49,8 +51,8 @@ crossval <- function(train, test){
     new_x <- test$x
     output <- predict(model, new_x)
     output <- as.data.frame(output)
-    output <- cbind(output, y_obs = test$y)
-    RMSE <- sqrt(mean(output$y_obs - output$y)^2)
+    output <- cbind(output, test$y)
+    RMSE <- sqrt(mean(test$y - output$y)^2)
     new_row <- c(i, RMSE)
     dfRMSE <- rbind(dfRMSE, new_row)
     i = i + 1
@@ -64,6 +66,7 @@ crossval <- function(train, test){
 # Data1
 
 ###Five Folds
+Next, I split the data into 5 distinct groups with 20% of the data in each group.  This creates the folds that will become the test and training sets of the data when they are inputted into the crossvalidation function.
 ```{r}
 #create the folds
 set.seed(2)
@@ -83,6 +86,8 @@ fold5_d1 <- crossval(data1[splitdata != 5,], data15)
 ```
 
 ###meanRMSE
+
+Next, the RMSE is calculated by taking the average of the values from each fold.
 ```{r}
 #calculate the RMSE for each fold and take the average of the 5 to hey meanRMSE
 data1_folds <- join_all(list(fold1_d1, fold2_d1, fold3_d1, fold4_d1, fold5_d1), by = "df")
@@ -92,6 +97,7 @@ data1_folds$meanRMSE <- (data1_folds$fold1 + data1_folds$fold2 + data1_folds$fol
 
 
 ###Best Out-Of-Sample Predictive Ability
+Next, I have plotted the values of the RMSE, which shows the minumum value of the RMSE and the coresponding degrees of freedom.
 ```{r}
 #minimum point and graph of df
 bestdf1 <- data1_folds[which(data1_folds$meanRMSE == min(data1_folds$meanRMSE)),]
@@ -102,9 +108,12 @@ ggplot() +
   geom_line(data = data1_folds, aes(x = df, y = meanRMSE))
   
 ```
+
 Here, from the calculation of the minimum of the RMSE, as well as the graph, you can see that RMSE is the smallest when df=38.  There, the RMSE, which is the estimate $\widehat{\sigma}$, is .8610.
 
 ###Spline Model for Visualization
+
+This, now, shows the splines model with the optimal degrees of freedom. 
 ```{r}
 #spline model with the optimal degrees of freedom
 data1_spline <- smooth.spline(data1$x, data1$y, df=bestdf1$df)
@@ -121,6 +130,7 @@ ggplot(model_spline_data_frame, aes(x=x)) +
 # Data 2
 
 ###Five Folds
+Next, I split the data into 5 distinct groups with 20% of the data in each group.  This creates the folds that will become the test and training sets of the data when they are inputted into the crossvalidation function.
 ```{r}
 #create the folds
 set.seed(2)
@@ -140,6 +150,7 @@ fold5_d2 <- crossval(data2[splitdata != 5,], data25)
 ```
 
 ###meanRMSE
+Next, the RMSE is calculated by taking the average of the values from each fold.
 ```{r}
 #calculate the RMSE for each fold and take the average of the 5 to get meanRMSE
 data2_folds <- join_all(list(fold1_d2, fold2_d2, fold3_d2, fold4_d2, fold5_d2), by = "df")
@@ -149,6 +160,7 @@ data2_folds$meanRMSE <- (data2_folds$fold1 + data2_folds$fold2 + data2_folds$fol
 
 
 ###Best Out-Of-Sample Predictive Ability
+Next, I have plotted the values of the RMSE, which shows the minumum value of the RMSE and the coresponding degrees of freedom.
 ```{r}
 #minimum point and graph of df
 bestdf2 <- data2_folds[which(data2_folds$meanRMSE == min(data2_folds$meanRMSE)),]
@@ -159,9 +171,12 @@ ggplot() +
   geom_line(data = data2_folds, aes(x = df, y = meanRMSE))
   
 ```
+
 Here, from the calculation of the minimum of the RMSE, as well as the graph, you can see that RMSE is the smallest when df=14.  There, the RMSE, which is the estimate $\widehat{\sigma}$, is 1.386.
 
 ###Spline Model for Visualization
+
+This, now, shows the splines model with the optimal degrees of freedom. 
 ```{r}
 #spline model with the optimal degrees of freedom
 data2_spline <- smooth.spline(data2$x, data2$y, df=bestdf2$df)
